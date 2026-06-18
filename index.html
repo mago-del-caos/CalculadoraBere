@@ -22,7 +22,6 @@
 </head>
 <body>
 
-    <!-- HUD Superior -->
     <div class="hud-overlay">
         <div class="mode-badge">
             <div class="mode-dot" id="status-dot"></div>
@@ -30,16 +29,10 @@
         </div>
     </div>
 
-    <!-- Botón de Tema (Claro / Oscuro) -->
     <button id="theme-toggle" class="theme-btn">🌙</button>
-
-    <!-- Tooltip de Coordenadas -->
     <div id="tooltip" class="tooltip"></div>
-
-    <!-- Viewport Gráfico 3D/2D -->
     <div id="viewport"></div>
 
-    <!-- Calculadora Flotante -->
     <div class="calculator-container" id="calculator">
         <div class="calc-header" id="calc-header">
             <div class="header-inner">
@@ -57,6 +50,12 @@
         </div>
 
         <div class="controls-area">
+            <!-- Menú Desplegable de Ejemplos -->
+            <div class="dropdown-container">
+                <button id="examples-btn" class="examples-btn">Ejemplos Rápidos ⌄</button>
+                <div id="examples-dropdown" class="examples-dropdown"></div>
+            </div>
+
             <div class="view-toggle">
                 <button class="toggle-btn active" id="btn-2d">2D GRÁFICO</button>
                 <button class="toggle-btn" id="btn-3d">3D SUPERFICIE</button>
@@ -79,31 +78,30 @@
             </div>
         </div>
 
-        <!-- Teclado Numérico (Distribución 5x5) -->
         <div class="keypad" id="keypad">
             <button class="key func" data-insert="sin(">sin</button>
             <button class="key func" data-insert="cos(">cos</button>
             <button class="key func" data-insert="tan(">tan</button>
-            <button class="key func" data-insert="(">(</button>
-            <button class="key func" data-insert=")">)</button>
-
             <button class="key func" data-insert="log(">log</button>
             <button class="key func" data-insert="ln(">ln</button>
-            <button class="key op" data-insert="^">xʸ</button>
-            <button class="key op" data-insert="sqrt(">√</button>
-            <button class="key op" data-insert="pi">π</button>
+
+            <button class="key func" data-insert="x">x</button>
+            <button class="key func" data-insert="y">y</button>
+            <button class="key func" data-insert="z">z</button>
+            <button class="key func" data-insert="(">(</button>
+            <button class="key func" data-insert=")">)</button>
 
             <button class="key" data-insert="7">7</button>
             <button class="key" data-insert="8">8</button>
             <button class="key" data-insert="9">9</button>
-            <button class="key op" data-action="backspace">DEL</button>
-            <button class="key clear" data-action="clear">AC</button>
+            <button class="key op" data-insert="/">÷</button>
+            <button class="key op" data-insert="^">xʸ</button>
 
             <button class="key" data-insert="4">4</button>
             <button class="key" data-insert="5">5</button>
             <button class="key" data-insert="6">6</button>
             <button class="key op" data-insert="*">×</button>
-            <button class="key op" data-insert="/">÷</button>
+            <button class="key op" data-insert="sqrt(">√</button>
 
             <button class="key" data-insert="1">1</button>
             <button class="key" data-insert="2">2</button>
@@ -113,12 +111,14 @@
 
             <button class="key" data-insert="0">0</button>
             <button class="key" data-insert=".">.</button>
-            <button class="key func" data-insert="x">x</button>
-            <button class="key func" data-insert="y">y</button>
-            <button class="key func" data-insert="z">z</button>
+            <button class="key op" data-insert="pi">π</button>
+            <button class="key op" data-action="backspace">DEL</button>
+            <button class="key clear" data-action="clear">AC</button>
 
             <button class="key enter" data-action="calculate" style="grid-column: span 5;">=</button>
         </div>
+        
+        <div class="resize-handle" id="resize-handle"></div>
     </div>
 
     <script type="module" src="script.js"></script>
