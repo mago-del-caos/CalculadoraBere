@@ -1,6 +1,3 @@
-/* =========================================
-   VARIABLES Y CONFIGURACIÓN GLOBAL
-   ========================================= */
 :root {
     --bg-app: #f1f5f9;
     --calc-width-desktop: 340px;
@@ -8,7 +5,7 @@
     --calc-bg: #1e293b;
     --calc-surface: #334155;
     --screen-bg: #0f172a;
-    --screen-text: #22d3ee; /* Cian Neón */
+    --screen-text: #22d3ee;
     --btn-bg: #475569;
     --btn-shadow: #1e293b;
     --btn-active: #0ea5e9;
@@ -17,7 +14,6 @@
     --panel-bg: rgba(255, 255, 255, 0.9);
 }
 
-/* TEMA OSCURO */
 :root.dark-mode {
     --bg-app: #0f172a;
     --text-primary: #f1f5f9;
@@ -29,7 +25,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    -webkit-tap-highlight-color: transparent; /* Eliminar highlight azul en móviles */
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -44,440 +40,182 @@ body {
 }
 
 /* =========================================
-   LIENZO 3D / 2D
+   PANTALLA DE INICIO (SPLASH SCREEN)
    ========================================= */
-#viewport {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+#splash-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: #0f172a;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+    cursor: pointer;
 }
+#splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+.splash-img {
+    max-width: 80%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.splash-loader {
+    color: #94a3b8;
+    margin-top: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    animation: pulse-text 1.5s infinite;
+}
+@keyframes pulse-text { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
 /* =========================================
-   INTERFAZ SUPERIOR (HUD) Y TOOLTIPS
+   LIENZO Y HUD
    ========================================= */
-.hud-overlay {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 5;
-    pointer-events: none;
-}
-.mode-badge {
-    background: var(--panel-bg);
-    padding: 8px 16px;
-    border-radius: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    font-weight: 600;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    backdrop-filter: blur(4px);
-    transition: background 0.3s, color 0.3s;
-}
-.mode-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #22c55e;
-    transition: background 0.3s;
+#viewport {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; z-index: 1;
 }
 
+.hud-overlay { position: absolute; top: 20px; left: 20px; z-index: 5; pointer-events: none; }
+.mode-badge {
+    background: var(--panel-bg); padding: 8px 16px; border-radius: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-weight: 600; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 8px; backdrop-filter: blur(4px);
+    transition: background 0.3s, color 0.3s;
+}
+.mode-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; transition: background 0.3s; }
+
 .theme-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 10;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: var(--panel-bg);
-    color: var(--text-secondary);
-    font-size: 1.2rem;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: transform 0.2s, background 0.3s;
-    backdrop-filter: blur(4px);
+    position: absolute; top: 20px; right: 20px; z-index: 10;
+    width: 40px; height: 40px; border-radius: 50%; border: none;
+    background: var(--panel-bg); color: var(--text-secondary);
+    font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s, background 0.3s; backdrop-filter: blur(4px);
 }
 .theme-btn:active { transform: scale(0.9); }
 
 .tooltip {
-    position: absolute;
-    background: rgba(15, 23, 42, 0.95);
-    color: white;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-family: 'JetBrains Mono', monospace;
-    pointer-events: none;
-    z-index: 20;
-    display: none;
-    border: 1px solid rgba(255,255,255,0.1);
-    transform: translate(15px, 15px);
+    position: absolute; background: rgba(15, 23, 42, 0.95); color: white;
+    padding: 6px 10px; border-radius: 6px; font-size: 0.8rem;
+    font-family: 'JetBrains Mono', monospace; pointer-events: none; z-index: 20;
+    display: none; border: 1px solid rgba(255,255,255,0.1); transform: translate(15px, 15px);
 }
 
 /* =========================================
-   CALCULADORA FLOTANTE
+   CALCULADORA
    ========================================= */
 .calculator-container {
-    position: absolute;
-    width: var(--calc-width-desktop);
-    min-width: 300px;
-    min-height: 500px;
-    max-width: 95vw;
-    max-height: 95vh;
-    background: var(--calc-bg);
-    border-radius: 16px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.1);
-    top: 20px;
-    right: 70px; /* Desplazado para no solaparse con el botón de tema */
+    position: absolute; width: var(--calc-width-desktop);
+    min-width: 300px; min-height: 500px; max-width: 95vw; max-height: 95vh;
+    background: var(--calc-bg); border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 100;
+    display: flex; flex-direction: column; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1); top: 20px; right: 70px;
     transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.calculator-container.pulse {
-    animation: pulse-anim 0.3s ease-out;
-}
+.calculator-container.pulse { animation: pulse-anim 0.3s ease-out; }
 @keyframes pulse-anim {
     0% { box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
     50% { box-shadow: 0 20px 60px rgba(34, 211, 238, 0.5); }
     100% { box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
 }
 
-/* Cabecera */
 .calc-header {
-    background: var(--calc-surface);
-    padding: 12px 16px;
-    cursor: grab;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(0,0,0,0.2);
-    user-select: none;
-    flex-shrink: 0;
+    background: var(--calc-surface); padding: 12px 16px; cursor: grab;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(0,0,0,0.2); user-select: none; flex-shrink: 0;
 }
 .calc-header:active { cursor: grabbing; }
-
-.header-inner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    justify-content: center;
-}
-.header-title {
-    color: #94a3b8;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
+.header-inner { display: flex; align-items: center; gap: 10px; width: 100%; justify-content: center; }
+.header-title { color: #94a3b8; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
 .header-controls { display: flex; gap: 8px; }
-.win-btn {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #ef4444;
-    border: none;
-    cursor: pointer;
-}
+.win-btn { width: 12px; height: 12px; border-radius: 50%; background: #ef4444; border: none; cursor: pointer; }
 
-/* Pantalla LCD */
-.screen-container {
-    padding: 16px;
-    background: var(--screen-bg);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    flex-shrink: 0;
-}
-.screen-label {
-    color: #64748b;
-    font-size: 0.7rem;
-    margin-bottom: 4px;
-    font-family: 'JetBrains Mono', monospace;
-}
+.screen-container { padding: 16px; background: var(--screen-bg); border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+.screen-label { color: #64748b; font-size: 0.7rem; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
 .screen-output {
-    color: var(--screen-text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.2rem;
-    min-height: 1.4em;
-    max-height: 4.2em;
-    overflow-y: auto;
-    word-break: break-all;
+    color: var(--screen-text); font-family: 'JetBrains Mono', monospace; font-size: 1.2rem;
+    min-height: 1.4em; max-height: 4.2em; overflow-y: auto; word-break: break-all;
     text-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
 }
 .screen-output::-webkit-scrollbar { display: none; }
 .screen-output.error { color: #f87171; text-shadow: none; }
-
-.cursor {
-    display: inline-block;
-    width: 2px;
-    height: 1.2em;
-    background: var(--screen-text);
-    animation: blink 1s step-end infinite;
-    vertical-align: text-bottom;
-    margin-left: 2px;
-}
+.cursor { display: inline-block; width: 2px; height: 1.2em; background: var(--screen-text); animation: blink 1s step-end infinite; vertical-align: text-bottom; margin-left: 2px; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* =========================================
-   CONTROLES INTERMEDIOS
-   ========================================= */
-.controls-area {
-    padding: 12px 16px;
-    flex-shrink: 0;
-}
+.controls-area { padding: 12px 16px; flex-shrink: 0; }
 
 /* Menú Desplegable */
-.dropdown-container {
-    position: relative;
-    margin-bottom: 12px;
-    width: 100%;
-}
+.dropdown-container { position: relative; margin-bottom: 12px; width: 100%; }
 .examples-btn {
-    width: 100%;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #cbd5e1;
-    padding: 10px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    transition: background 0.2s;
+    width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+    color: #cbd5e1; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer;
+    text-align: center; font-family: 'Inter', sans-serif; font-size: 0.9rem; transition: background 0.2s;
 }
 .examples-btn:hover { background: rgba(0,0,0,0.5); }
 .examples-dropdown {
-    display: none;
-    position: absolute;
-    top: 105%;
-    left: 0;
-    width: 100%;
-    background: #0f172a;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    z-index: 110; /* Debe estar por encima del teclado */
-    max-height: 250px;
-    overflow-y: auto;
-    border: 1px solid rgba(255,255,255,0.1);
+    display: none; position: absolute; top: 105%; left: 0; width: 100%; background: #0f172a;
+    border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 110; max-height: 250px;
+    overflow-y: auto; border: 1px solid rgba(255,255,255,0.1);
 }
 .examples-dropdown.show { display: block; }
 .examples-dropdown::-webkit-scrollbar { width: 4px; }
 .examples-dropdown::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
-.examples-item {
-    padding: 10px 16px;
-    color: #cbd5e1;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-size: 0.85rem;
-    font-family: 'JetBrains Mono', monospace;
-    transition: background 0.2s, color 0.2s;
-}
+.examples-item { padding: 10px 16px; color: #cbd5e1; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; transition: background 0.2s, color 0.2s; }
 .examples-item:last-child { border-bottom: none; }
 .examples-item:hover { background: #1e293b; color: var(--screen-text); }
 
-/* Toggle 2D/3D */
-.view-toggle {
-    display: flex;
-    background: rgba(0,0,0,0.3);
-    border-radius: 8px;
-    padding: 4px;
-    margin-bottom: 16px;
-}
-.toggle-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    padding: 8px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-family: 'Inter', sans-serif;
-}
-.toggle-btn.active {
-    background: var(--btn-active);
-    color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+.view-toggle { display: flex; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; margin-bottom: 12px; }
+.toggle-btn { flex: 1; background: transparent; border: none; color: #94a3b8; padding: 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: 'Inter', sans-serif; }
+.toggle-btn.active { background: var(--btn-active); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-/* Sliders */
+/* Selector de Color */
+.color-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.8rem; color: #cbd5e1; }
+.color-options { display: flex; gap: 8px; }
+.color-btn { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+.color-btn.active { border-color: white; transform: scale(1.1); }
+.color-btn.green { background: #006847; }
+.color-btn.yellow { background: #FFD700; }
+.color-btn.blue { background: #0033A0; }
+
 .slider-group { margin-bottom: 12px; }
-.slider-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    font-size: 0.8rem;
-    color: #cbd5e1;
-}
-input[type=range] {
-    width: 100%;
-    height: 4px;
-    background: #475569;
-    border-radius: 2px;
-    appearance: none;
-    -webkit-appearance: none;
-    outline: none;
-}
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--screen-text);
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
-}
-input[type=range]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border: none;
-    border-radius: 50%;
-    background: var(--screen-text);
-    cursor: pointer;
-}
+.slider-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.8rem; color: #cbd5e1; }
+input[type=range] { width: 100%; height: 4px; background: #475569; border-radius: 2px; appearance: none; -webkit-appearance: none; outline: none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--screen-text); cursor: pointer; box-shadow: 0 0 10px rgba(34, 211, 238, 0.5); }
+input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border: none; border-radius: 50%; background: var(--screen-text); cursor: pointer; }
 
-/* =========================================
-   TECLADO NUMÉRICO
-   ========================================= */
-.keypad {
-    flex: 1; /* Permite absorber el espacio al redimensionar */
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: 1fr; /* Mantiene botones cuadrados al redimensionar */
-    gap: 8px;
-    padding: 16px;
-    background: var(--calc-surface);
-    border-top: 1px solid rgba(255,255,255,0.05);
-    min-height: 250px; /* Altura mínima para evitar aplastamiento extremo */
-}
-.key {
-    background: var(--btn-bg);
-    border: none;
-    border-radius: 8px;
-    color: #f1f5f9;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    box-shadow: 0 4px 0 var(--btn-shadow);
-    position: relative;
-    top: 0;
-    font-family: 'Inter', sans-serif;
-    min-height: 40px;
-}
-.key:active {
-    top: 4px;
-    box-shadow: 0 0 0 var(--btn-shadow);
-    background: #334155;
-}
+.keypad { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 1fr; gap: 8px; padding: 16px; background: var(--calc-surface); border-top: 1px solid rgba(255,255,255,0.05); min-height: 250px; }
+.key { background: var(--btn-bg); border: none; border-radius: 8px; color: #f1f5f9; font-size: 1rem; cursor: pointer; transition: transform 0.1s, background 0.2s; display: flex; align-items: center; justify-content: center; font-weight: 500; box-shadow: 0 4px 0 var(--btn-shadow); position: relative; top: 0; font-family: 'Inter', sans-serif; min-height: 40px; }
+.key:active { top: 4px; box-shadow: 0 0 0 var(--btn-shadow); background: #334155; }
 .key.func { color: #60a5fa; font-size: 0.85rem; }
 .key.op { color: #fbbf24; font-size: 1.1rem; }
-.key.clear { 
-    background: #ef4444; 
-    box-shadow: 0 4px 0 #b91c1c; 
-    color: white; 
-    font-weight: bold;
-}
+.key.clear { background: #ef4444; box-shadow: 0 4px 0 #b91c1c; color: white; font-weight: bold; }
 .key.clear:active { box-shadow: 0 0 0 #b91c1c; }
-.key.enter { 
-    background: var(--screen-text); 
-    color: #0f172a; 
-    box-shadow: 0 4px 0 #0891b2; 
-    font-weight: bold; 
-    font-size: 1.2rem;
-}
+.key.enter { background: var(--screen-text); color: #0f172a; box-shadow: 0 4px 0 #0891b2; font-weight: bold; font-size: 1.2rem; }
 .key.enter:active { box-shadow: 0 0 0 #0891b2; }
 
-/* =========================================
-   REDIMENSIÓN ESCRITORIO
-   ========================================= */
-.resize-handle {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 20px;
-    height: 20px;
-    cursor: nwse-resize;
-    z-index: 101;
-    display: none;
-}
-.resize-handle::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    right: 4px;
-    width: 8px;
-    height: 8px;
-    border-right: 2px solid #94a3b8;
-    border-bottom: 2px solid #94a3b8;
-}
-@media (min-width: 769px) {
-    .resize-handle { display: block; }
-}
+.resize-handle { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize; z-index: 101; display: none; }
+.resize-handle::after { content: ''; position: absolute; bottom: 4px; right: 4px; width: 8px; height: 8px; border-right: 2px solid #94a3b8; border-bottom: 2px solid #94a3b8; }
+@media (min-width: 769px) { .resize-handle { display: block; } }
 
-/* =========================================
-   RESPONSIVE MÓVIL OPTIMIZADO
-   ========================================= */
+/* RESPONSIVE MÓVIL */
 @media (max-width: 768px) {
     body { flex-direction: column; }
-
-    .calculator-container {
-        width: 100%;
-        height: var(--calc-height-mobile-collapsed);
-        min-width: 100%;
-        min-height: 60px;
-        max-height: 100vh;
-        top: auto;
-        bottom: 0;
-        right: 0;
-        left: 0;
-        border-radius: 16px 16px 0 0;
-        transform: none !important; /* Deshabilitar arrastre libre en móvil */
-    }
-
-    .calculator-container.expanded {
-        height: 92vh; /* Ocupa casi toda la pantalla para ver todo el teclado */
-    }
-
-    .calc-header {
-        cursor: default;
-        justify-content: center;
-        position: relative;
-        padding: 10px 16px;
-    }
-
-    .mobile-drag-handle {
-        display: block !important;
-        width: 40px;
-        height: 5px;
-        background: #64748b;
-        border-radius: 3px;
-        margin-bottom: 4px;
-    }
-
+    .calculator-container { width: 100%; height: var(--calc-height-mobile-collapsed); min-width: 100%; min-height: 60px; max-height: 100vh; top: auto; bottom: 0; right: 0; left: 0; border-radius: 16px 16px 0 0; transform: none !important; }
+    .calculator-container.expanded { height: 92vh; }
+    .calc-header { cursor: default; justify-content: center; position: relative; padding: 10px 16px; }
+    .mobile-drag-handle { display: block !important; width: 40px; height: 5px; background: #64748b; border-radius: 3px; margin-bottom: 4px; }
     .header-title { display: none; }
     .header-controls { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
-    
-    /* El botón de tema se mantiene arriba a la derecha en móvil para no perderlo de vista */
     .theme-btn { top: 15px; right: 15px; width: 35px; height: 35px; font-size: 1rem; z-index: 101; }
-
-    /* Compactación de la pantalla y controles para ganar espacio */
     .screen-container { padding: 10px 16px; }
     .screen-output { font-size: 1.1rem; }
     .controls-area { padding: 8px 12px; }
@@ -485,16 +223,9 @@ input[type=range]::-moz-range-thumb {
     .examples-btn { padding: 8px; font-size: 0.85rem; }
     .view-toggle { margin-bottom: 8px; padding: 3px; }
     .toggle-btn { padding: 6px; font-size: 0.8rem; }
+    .color-selector { margin-bottom: 8px; }
     .slider-group { margin-bottom: 8px; }
-
-    /* Teclado ajustado para caber perfectamente */
-    .keypad {
-        flex: 1;
-        min-height: 0; /* Permite que el flexbox encoja el teclado si es necesario */
-        gap: 6px;
-        padding: 10px;
-        grid-auto-rows: 1fr; /* Distribuye el espacio equitativamente */
-    }
+    .keypad { flex: 1; min-height: 0; gap: 6px; padding: 10px; grid-auto-rows: 1fr; }
     .key { min-height: 35px; font-size: 0.9rem; }
     .key.func { font-size: 0.8rem; }
     .key.op { font-size: 1rem; }
