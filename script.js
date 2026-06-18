@@ -6,6 +6,7 @@ const AppState = {
     a: 1.0,
     b: 1.0,
     mode: '2D',
+    graphColor: 0x006847, // Verde Bandera por defecto
     isMobile: window.innerWidth <= 768,
     isDraggingCalc: false,
     isAnimating: false,
@@ -13,7 +14,7 @@ const AppState = {
     isDarkMode: false
 };
 
-// Definición de temas para el lienzo 3D
+// Definición de temas
 const themes = {
     light: { bg: 0xf8fafc, paper: 0xffffff, grid: 0xe2e8f0, axes: 0x0f172a, grid3D_center: 0x94a3b8, grid3D_base: 0xe2e8f0 },
     dark: { bg: 0x0a0f1d, paper: 0x1e293b, grid: 0x334155, axes: 0x94a3b8, grid3D_center: 0x475569, grid3D_base: 0x334155 }
@@ -21,6 +22,7 @@ const themes = {
 
 // Referencias DOM
 const els = {
+    splash: document.getElementById('splash-screen'),
     display: document.getElementById('display'),
     valA: document.getElementById('val-a'),
     valB: document.getElementById('val-b'),
@@ -38,19 +40,29 @@ const els = {
     themeBtn: document.getElementById('theme-toggle'),
     resizeHandle: document.getElementById('resize-handle'),
     examplesBtn: document.getElementById('examples-btn'),
-    examplesDropdown: document.getElementById('examples-dropdown')
+    examplesDropdown: document.getElementById('examples-dropdown'),
+    colorBtns: document.querySelectorAll('.color-btn')
 };
 
 // =========================================
-// FUNCIONES DE EJEMPLO (NUEVAS Y 3D)
+// PANTALLA DE INICIO (SPLASH SCREEN)
+// =========================================
+function hideSplash() {
+    els.splash.classList.add('hidden');
+    setTimeout(() => els.splash.style.display = 'none', 800);
+}
+// Ocultar al hacer clic o después de 3 segundos
+els.splash.addEventListener('click', hideSplash);
+setTimeout(hideSplash, 3000);
+
+// =========================================
+// FUNCIONES DE EJEMPLO
 // =========================================
 const examples = [
-    // 2D
     { name: "1. Onda Senoidal 2D", expr: "a * sin(x * b)", mode: "2D" },
     { name: "2. Parábola Cúbica 2D", expr: "a * x^3 - b * x", mode: "2D" },
     { name: "3. Función Logarítmica 2D", expr: "a * log(abs(x) * b)", mode: "2D" },
     { name: "4. Gaussiana (Campana) 2D", expr: "a * exp(-(x^2) / b)", mode: "2D" },
-    // 3D
     { name: "5. Onda Senoidal 3D", expr: "sin(x) * a + cos(y) * b", mode: "3D" },
     { name: "6. Cartón de Huevos 3D", expr: "sin(x * a) * cos(y * b)", mode: "3D" },
     { name: "7. Onda Radial (Agua) 3D", expr: "sin(sqrt(x^2 + y^2) * a) * 2", mode: "3D" },
@@ -61,7 +73,6 @@ const examples = [
     { name: "12. Cráter Volcánico 3D", expr: "-a * exp(-(x^2 + y^2) / b)", mode: "3D" }
 ];
 
-// Poblar el menú desplegable
 examples.forEach(ex => {
     const item = document.createElement('div');
     item.className = 'examples-item';
@@ -76,7 +87,6 @@ examples.forEach(ex => {
     els.examplesDropdown.appendChild(item);
 });
 
-// Eventos del menú desplegable
 els.examplesBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     els.examplesDropdown.classList.toggle('show');
@@ -86,6 +96,18 @@ window.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown-container')) {
         els.examplesDropdown.classList.remove('show');
     }
+});
+
+// =========================================
+// SELECTOR DE COLOR INSTITUCIONAL
+// =========================================
+els.colorBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        els.colorBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        AppState.graphColor = parseInt(btn.dataset.color);
+        updateGraphics(); // Actualizar gráfica con el nuevo color
+    });
 });
 
 // =========================================
@@ -138,14 +160,14 @@ geometry3D.setAttribute('color', new THREE.BufferAttribute(new Float32Array(coun
 const material3D = new THREE.MeshStandardMaterial({
     vertexColors: true, 
     side: THREE.DoubleSide,
-    roughness: 0.2, 
+    roughness: 0.3, 
     metalness: 0.1, 
     flatShading: false
 });
 const mesh3D = new THREE.Mesh(geometry3D, material3D);
 mesh3D.castShadow = true; 
 mesh3D.receiveShadow = true;
-mesh3D.visible = false; // Inicialmente oculto
+mesh3D.visible = false;
 group3D.add(mesh3D);
 
 let gridHelper3D = new THREE.GridHelper(20, 20, themes.light.grid3D_center, themes.light.grid3D_base);
@@ -181,7 +203,9 @@ group2D.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.V
 const curveRes = 400;
 const curve2DGeo = new THREE.BufferGeometry();
 curve2DGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(curveRes * 3), 3));
-const curve2D = new THREE.Line(curve2DGeo, new THREE.LineBasicMaterial({ color: 0xef4444 }));
+// La línea 2D usa el color seleccionado
+const curve2DMat = new THREE.LineBasicMaterial({ color: AppState.graphColor });
+const curve2D = new THREE.Line(curve2DGeo, curve2DMat);
 group2D.add(curve2D);
 
 // =========================================
@@ -190,22 +214,17 @@ group2D.add(curve2D);
 function prepareExpression(rawExpr) {
     let expr = rawExpr.toLowerCase();
     expr = expr.replace(/\^/g, '**');
-    
-    // Multiplicación implícita
     expr = expr.replace(/(\d)([a-zA-Z\(])/g, '$1*$2'); 
     expr = expr.replace(/\)([a-zA-Z0-9\(])/g, ')*$1');  
     expr = expr.replace(/([xyz])([xyz\(])/g, '$1*$2');  
     
-    // Funciones
     expr = expr.replace(/\bln\(/g, 'Math.log(');
     expr = expr.replace(/\blog\(/g, 'Math.log10(');
     const funcs = ['sin','cos','tan','asin','acos','atan','sqrt','abs','exp','pow','floor','ceil','round'];
     funcs.forEach(f => { expr = expr.replace(new RegExp(`\\b${f}\\(`, 'g'), `Math.${f}(`); });
     
-    // Constantes
     expr = expr.replace(/\bpi\b/g, 'Math.PI');
     expr = expr.replace(/\be\b/g, 'Math.E'); 
-    
     return expr;
 }
 
@@ -222,10 +241,15 @@ function evaluate(x, y = 0) {
 }
 
 function updateGraphics() {
-    // Malla 3D
+    // Actualizar color de la curva 2D
+    curve2DMat.color.setHex(AppState.graphColor);
+
+    // Actualizar malla 3D (Gradiente: del color elegido a blanco)
     const pos3D = geometry3D.attributes.position;
     const col3D = geometry3D.attributes.color;
-    const cLow = new THREE.Color(0x3b82f6), cHigh = new THREE.Color(0xef4444), tempC = new THREE.Color();
+    const cLow = new THREE.Color(AppState.graphColor);
+    const cHigh = new THREE.Color(0xffffff); // Blanco para el gradiente topográfico
+    const tempC = new THREE.Color();
 
     for (let i = 0; i < pos3D.count; i++) {
         const x = pos3D.getX(i), y = pos3D.getZ(i);
@@ -243,7 +267,7 @@ function updateGraphics() {
     col3D.needsUpdate = true;
     geometry3D.computeVertexNormals();
 
-    // Curva 2D
+    // Actualizar curva 2D
     const pos2D = curve2DGeo.attributes.position;
     for (let i = 0; i < curveRes; i++) {
         const x = (i / (curveRes - 1)) * 12 - 6;
@@ -269,21 +293,9 @@ els.keypad.addEventListener('click', (e) => {
     else if (btn.dataset.action === 'calculate') calculate();
 });
 
-function insertText(char) { 
-    AppState.expression += char; 
-    updateDisplay(); 
-    updateGraphics(); 
-}
-function clearDisplay() { 
-    AppState.expression = ""; 
-    updateDisplay(); 
-    updateGraphics(); 
-}
-function backspace() { 
-    AppState.expression = AppState.expression.slice(0, -1); 
-    updateDisplay(); 
-    updateGraphics(); 
-}
+function insertText(char) { AppState.expression += char; updateDisplay(); updateGraphics(); }
+function clearDisplay() { AppState.expression = ""; updateDisplay(); updateGraphics(); }
+function backspace() { AppState.expression = AppState.expression.slice(0, -1); updateDisplay(); updateGraphics(); }
 function calculate() {
     els.calc.classList.remove('pulse');
     void els.calc.offsetWidth; 
@@ -298,9 +310,7 @@ function updateDisplay() {
         try {
             const expr = prepareExpression(text);
             new Function('x', 'y', 'z', 'a', 'b', `return ${expr};`);
-        } catch (e) { 
-            isSyntaxError = true; 
-        }
+        } catch (e) { isSyntaxError = true; }
     }
 
     if (isSyntaxError) {
@@ -312,20 +322,11 @@ function updateDisplay() {
     }
 }
 
-// Sliders
-els.sliderA.addEventListener('input', (e) => { 
-    AppState.a = parseFloat(e.target.value); 
-    els.valA.innerText = AppState.a.toFixed(1); 
-    updateGraphics(); 
-});
-els.sliderB.addEventListener('input', (e) => { 
-    AppState.b = parseFloat(e.target.value); 
-    els.valB.innerText = AppState.b.toFixed(1); 
-    updateGraphics(); 
-});
+els.sliderA.addEventListener('input', (e) => { AppState.a = parseFloat(e.target.value); els.valA.innerText = AppState.a.toFixed(1); updateGraphics(); });
+els.sliderB.addEventListener('input', (e) => { AppState.b = parseFloat(e.target.value); els.valB.innerText = AppState.b.toFixed(1); updateGraphics(); });
 
 // =========================================
-// LÓGICA DE MODO (2D <-> 3D) CORREGIDA
+// LÓGICA DE MODO (2D <-> 3D)
 // =========================================
 function setMode(mode) {
     if (AppState.isAnimating && AppState.mode === mode) return;
@@ -339,21 +340,11 @@ function setMode(mode) {
 
     let targetPos, targetLookAt, targetUp;
     if (mode === '2D') {
-        group3D.visible = false; 
-        group2D.visible = true;
-        mesh3D.visible = false; // Ocultar malla explícitamente
-        
-        targetPos = new THREE.Vector3(0, 0, 10); 
-        targetLookAt = new THREE.Vector3(0, 0, 0); 
-        targetUp = new THREE.Vector3(0, 1, 0);
+        group3D.visible = false; group2D.visible = true; mesh3D.visible = false;
+        targetPos = new THREE.Vector3(0, 0, 10); targetLookAt = new THREE.Vector3(0, 0, 0); targetUp = new THREE.Vector3(0, 1, 0);
     } else {
-        group3D.visible = true; 
-        group2D.visible = false;
-        mesh3D.visible = true; // MOSTRAR MALLA EXPLÍCITAMENTE (Solución al bug 3D)
-        
-        targetPos = new THREE.Vector3(8, 6, 8); 
-        targetLookAt = new THREE.Vector3(0, 0, 0); 
-        targetUp = new THREE.Vector3(0, 1, 0);
+        group3D.visible = true; group2D.visible = false; mesh3D.visible = true;
+        targetPos = new THREE.Vector3(8, 6, 8); targetLookAt = new THREE.Vector3(0, 0, 0); targetUp = new THREE.Vector3(0, 1, 0);
     }
 
     const startPos = camera.position.clone(), startUp = camera.up.clone(), startTarget = controls.target.clone();
@@ -368,10 +359,7 @@ function setMode(mode) {
         controls.target.lerpVectors(startTarget, targetLookAt, ease);
         controls.update();
         if (progress < 1) requestAnimationFrame(animateCamera);
-        else { 
-            AppState.isAnimating = false; 
-            controls.enableRotate = (mode === '3D'); 
-        }
+        else { AppState.isAnimating = false; controls.enableRotate = (mode === '3D'); }
     }
     animateCamera();
 }
@@ -424,8 +412,7 @@ window.addEventListener('mousemove', (e) => {
         let newX = e.clientX - dragOffset.x, newY = e.clientY - dragOffset.y;
         newX = Math.max(0, Math.min(window.innerWidth - els.calc.offsetWidth, newX));
         newY = Math.max(0, Math.min(window.innerHeight - els.calc.offsetHeight, newY));
-        els.calc.style.left = newX + 'px'; 
-        els.calc.style.top = newY + 'px';
+        els.calc.style.left = newX + 'px'; els.calc.style.top = newY + 'px';
         els.calc.style.right = 'auto';
     }
 });
@@ -447,25 +434,12 @@ window.addEventListener('mousemove', (e) => {
     els.calc.style.height = newHeight + 'px';
 });
 
-function expandMobile() { 
-    els.calc.classList.add('expanded'); 
-    AppState.calcExpanded = true; 
-    els.btnMinimize.style.background = '#94a3b8'; 
-}
-function minimizeMobile() { 
-    els.calc.classList.remove('expanded'); 
-    AppState.calcExpanded = false; 
-    els.btnMinimize.style.background = '#ef4444'; 
-}
-els.btnMinimize.addEventListener('click', () => { 
-    if (AppState.calcExpanded) minimizeMobile(); 
-    else expandMobile(); 
-});
+function expandMobile() { els.calc.classList.add('expanded'); AppState.calcExpanded = true; els.btnMinimize.style.background = '#94a3b8'; }
+function minimizeMobile() { els.calc.classList.remove('expanded'); AppState.calcExpanded = false; els.btnMinimize.style.background = '#ef4444'; }
+els.btnMinimize.addEventListener('click', () => { if (AppState.calcExpanded) minimizeMobile(); else expandMobile(); });
 
 let touchStartY = 0;
-els.calcHeader.addEventListener('touchstart', (e) => { 
-    touchStartY = e.touches[0].clientY; 
-}, {passive: true});
+els.calcHeader.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, {passive: true});
 els.calcHeader.addEventListener('touchmove', (e) => {
     const touchY = e.touches[0].clientY, diff = touchStartY - touchY;
     if (diff > 50 && !AppState.calcExpanded) expandMobile();
@@ -496,8 +470,7 @@ function handlePointer(clientX, clientY) {
         pointerMesh.position.copy(point);
         pointerMesh.visible = true;
         els.tooltip.style.display = 'block';
-        els.tooltip.style.left = clientX + 'px'; 
-        els.tooltip.style.top = clientY + 'px';
+        els.tooltip.style.left = clientX + 'px'; els.tooltip.style.top = clientY + 'px';
         if (AppState.mode === '2D') els.tooltip.innerText = `x: ${point.x.toFixed(2)}, y: ${point.y.toFixed(2)}`;
         else els.tooltip.innerText = `x: ${point.x.toFixed(2)}, z: ${point.z.toFixed(2)}`;
     } else {
@@ -526,11 +499,8 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    
     const isNowMobile = window.innerWidth <= 768;
-    if (isNowMobile !== AppState.isMobile) {
-        location.reload(); 
-    }
+    if (isNowMobile !== AppState.isMobile) location.reload(); 
 });
 
 // Inicialización
