@@ -3,7 +3,7 @@
    ========================================= */
 :root {
     --bg-app: #f1f5f9;
-    --calc-width-desktop: 320px;
+    --calc-width-desktop: 340px;
     --calc-height-mobile-collapsed: 60px;
     --calc-bg: #1e293b;
     --calc-surface: #334155;
@@ -12,14 +12,20 @@
     --btn-bg: #475569;
     --btn-shadow: #1e293b;
     --btn-active: #0ea5e9;
-    --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    --text-primary: #0f172a;
+}
+
+/* TEMA OSCURO */
+:root.dark-mode {
+    --bg-app: #0f172a;
+    --text-primary: #f1f5f9;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    -webkit-tap-highlight-color: transparent; /* Eliminar highlight azul en móviles */
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -27,14 +33,12 @@ body {
     width: 100vw;
     height: 100vh;
     background-color: var(--bg-app);
-    overflow: hidden; /* Prevenir scroll nativo */
+    overflow: hidden;
     display: flex;
     position: relative;
+    transition: background-color 0.3s ease;
 }
 
-/* =========================================
-   CANVAS 3D (Lienzo Principal)
-   ========================================= */
 #viewport {
     position: absolute;
     top: 0;
@@ -42,12 +46,8 @@ body {
     width: 100%;
     height: 100%;
     z-index: 1;
-    background: radial-gradient(circle at center, #ffffff 0%, #e2e8f0 100%);
 }
 
-/* =========================================
-   UI OVERLAYS (Etiquetas, Toasts, etc)
-   ========================================= */
 .hud-overlay {
     position: absolute;
     top: 20px;
@@ -67,6 +67,10 @@ body {
     gap: 8px;
     backdrop-filter: blur(4px);
 }
+.dark-mode .mode-badge {
+    background: rgba(30, 41, 59, 0.9);
+    color: #f1f5f9;
+}
 .mode-dot {
     width: 10px;
     height: 10px;
@@ -74,6 +78,25 @@ body {
     background: #22c55e;
     transition: background 0.3s;
 }
+
+.theme-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #334155;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s, background 0.3s;
+}
+.theme-btn:active { transform: scale(0.9); }
+.dark-mode .theme-btn { background: rgba(30, 41, 59, 0.9); color: #f1f5f9; }
 
 .tooltip {
     position: absolute;
@@ -96,6 +119,10 @@ body {
 .calculator-container {
     position: absolute;
     width: var(--calc-width-desktop);
+    min-width: 300px;
+    min-height: 500px;
+    max-width: 90vw;
+    max-height: 90vh;
     background: var(--calc-bg);
     border-radius: 16px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.3);
@@ -105,8 +132,9 @@ body {
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.1);
     top: 20px;
-    right: 20px;
-    transition: transform 0.1s linear, height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    right: 70px; /* Evita solapamiento con el botón de tema */
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    resize: both; /* Permite redimensionar en escritorio */
 }
 
 .calc-header {
@@ -241,18 +269,20 @@ input[type=range]::-moz-range-thumb {
 }
 
 .keypad {
+    flex: 1; /* Permite que el teclado absorba el espacio al redimensionar */
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 1fr;
     gap: 8px;
     padding: 16px;
     background: var(--calc-surface);
     border-top: 1px solid rgba(255,255,255,0.05);
+    min-height: 250px; /* Altura mínima para evitar que se aplaste demasiado */
 }
 .key {
     background: var(--btn-bg);
     border: none;
     border-radius: 8px;
-    height: 45px;
     color: #f1f5f9;
     font-size: 1rem;
     cursor: pointer;
@@ -265,6 +295,7 @@ input[type=range]::-moz-range-thumb {
     position: relative;
     top: 0;
     font-family: 'Inter', sans-serif;
+    min-height: 40px;
 }
 .key:active {
     top: 4px;
@@ -274,7 +305,6 @@ input[type=range]::-moz-range-thumb {
 .key.func { color: #60a5fa; font-size: 0.85rem; }
 .key.op { color: #fbbf24; font-size: 1.1rem; }
 .key.clear { 
-    grid-column: span 2; 
     background: #ef4444; 
     box-shadow: 0 4px 0 #b91c1c; 
     color: white;
@@ -286,6 +316,7 @@ input[type=range]::-moz-range-thumb {
     color: #0f172a; 
     box-shadow: 0 4px 0 #0891b2; 
     font-weight: bold;
+    font-size: 1.2rem;
 }
 .key.enter:active { box-shadow: 0 0 0 #0891b2; }
 
@@ -298,16 +329,19 @@ input[type=range]::-moz-range-thumb {
     .calculator-container {
         width: 100%;
         height: var(--calc-height-mobile-collapsed);
+        min-width: 100%;
+        min-height: 60px;
         top: auto;
         bottom: 0;
         right: 0;
         left: 0;
         border-radius: 16px 16px 0 0;
-        transform: none !important; /* Deshabilitar arrastre libre en móvil */
+        transform: none !important; 
+        resize: none; /* Desactivar redimensión en móvil */
     }
 
     .calculator-container.expanded {
-        height: 75vh; /* Expandir casi toda la pantalla */
+        height: 75vh; 
     }
 
     .calc-header {
@@ -327,16 +361,5 @@ input[type=range]::-moz-range-thumb {
 
     .header-title { display: none; }
     .header-controls { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
-
-    .keypad {
-        gap: 10px;
-        grid-template-columns: repeat(5, 1fr);
-        overflow-y: auto;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-    .keypad::-webkit-scrollbar { display: none; }
-    
-    .key { height: 50px; }
-    .key.clear { grid-column: span 1; }
+    .theme-btn { top: auto; bottom: 20px; right: 20px; }
 }
