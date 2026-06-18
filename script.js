@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // =========================================
-// ESTADO GLOBAL
+// ESTADO GLOBAL DE LA APLICACIÓN
 // =========================================
 const AppState = {
     expression: "0.5 * sin(x * a) + 1",
-    a: 1.0, b: 1.0,
+    a: 1.0,
+    b: 1.0,
     mode: '2D',
     isMobile: window.innerWidth <= 768,
     isDraggingCalc: false,
@@ -15,22 +16,28 @@ const AppState = {
     isDarkMode: false
 };
 
+// Definición de temas para el lienzo 3D
 const themes = {
     light: { bg: 0xf8fafc, paper: 0xffffff, grid: 0xe2e8f0, axes: 0x0f172a, grid3D_center: 0x94a3b8, grid3D_base: 0xe2e8f0 },
     dark: { bg: 0x0a0f1d, paper: 0x1e293b, grid: 0x334155, axes: 0x94a3b8, grid3D_center: 0x475569, grid3D_base: 0x334155 }
 };
 
+// Referencias DOM
 const els = {
     display: document.getElementById('display'),
-    valA: document.getElementById('val-a'), valB: document.getElementById('val-b'),
-    statusText: document.getElementById('status-text'), statusDot: document.getElementById('status-dot'),
+    valA: document.getElementById('val-a'),
+    valB: document.getElementById('val-b'),
+    statusText: document.getElementById('status-text'),
+    statusDot: document.getElementById('status-dot'),
     tooltip: document.getElementById('tooltip'),
-    calc: document.getElementById('calculator'), calcHeader: document.getElementById('calc-header'),
-    mobileHandle: document.getElementById('mobile-handle'),
+    calc: document.getElementById('calculator'),
+    calcHeader: document.getElementById('calc-header'),
     btnMinimize: document.getElementById('btn-minimize'),
     keypad: document.getElementById('keypad'),
-    btn2D: document.getElementById('btn-2d'), btn3D: document.getElementById('btn-3d'),
-    sliderA: document.getElementById('slider-a'), sliderB: document.getElementById('slider-b'),
+    btn2D: document.getElementById('btn-2d'),
+    btn3D: document.getElementById('btn-3d'),
+    sliderA: document.getElementById('slider-a'),
+    sliderB: document.getElementById('slider-b'),
     themeBtn: document.getElementById('theme-toggle'),
     resizeHandle: document.getElementById('resize-handle'),
     examplesBtn: document.getElementById('examples-btn'),
@@ -68,6 +75,7 @@ examples.forEach(ex => {
     els.examplesDropdown.appendChild(item);
 });
 
+// Eventos del menú desplegable
 els.examplesBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     els.examplesDropdown.classList.toggle('show');
@@ -101,14 +109,18 @@ container.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-raycaster.params.Line.threshold = 0.2; 
 
+const raycaster = new THREE.Raycaster();
+raycaster.params.Line.threshold = 0.2; // Necesario para detectar líneas finas en 2D
+
+// Iluminación
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
 dirLight.position.set(5, 10, 5);
 dirLight.castShadow = true;
-dirLight.shadow.mapSize.width = 2048; dirLight.shadow.mapSize.height = 2048;
+dirLight.shadow.mapSize.width = 2048; 
+dirLight.shadow.mapSize.height = 2048;
 scene.add(dirLight);
 
 // =========================================
@@ -123,11 +135,15 @@ const count = geometry3D.attributes.position.count;
 geometry3D.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
 
 const material3D = new THREE.MeshStandardMaterial({
-    vertexColors: true, side: THREE.DoubleSide,
-    roughness: 0.2, metalness: 0.1, flatShading: false
+    vertexColors: true, 
+    side: THREE.DoubleSide,
+    roughness: 0.2, 
+    metalness: 0.1, 
+    flatShading: false
 });
 const mesh3D = new THREE.Mesh(geometry3D, material3D);
-mesh3D.castShadow = true; mesh3D.receiveShadow = true;
+mesh3D.castShadow = true; 
+mesh3D.receiveShadow = true;
 mesh3D.visible = false;
 group3D.add(mesh3D);
 
@@ -168,20 +184,27 @@ const curve2D = new THREE.Line(curve2DGeo, new THREE.LineBasicMaterial({ color: 
 group2D.add(curve2D);
 
 // =========================================
-// MOTOR MATEMÁTICO
+// MOTOR MATEMÁTICO AVANZADO
 // =========================================
 function prepareExpression(rawExpr) {
     let expr = rawExpr.toLowerCase();
     expr = expr.replace(/\^/g, '**');
-    expr = expr.replace(/(\d)([a-zA-Z\(])/g, '$1*$2'); 
-    expr = expr.replace(/\)([a-zA-Z0-9\(])/g, ')*$1');  
-    expr = expr.replace(/([a-zA-Z])\(/g, '$1*(');        
+    
+    // Multiplicación implícita ultra segura (no afecta a nombres de funciones)
+    expr = expr.replace(/(\d)([a-zA-Z\(])/g, '$1*$2'); // 2x -> 2*x, 2( -> 2*(
+    expr = expr.replace(/\)([a-zA-Z0-9\(])/g, ')*$1');  // )x -> )*x, )2 -> )*2, )( -> )*(
+    expr = expr.replace(/([xyz])([xyz\(])/g, '$1*$2');  // xy -> x*y, x( -> x*(
+    
+    // Reemplazar funciones
     expr = expr.replace(/\bln\(/g, 'Math.log(');
     expr = expr.replace(/\blog\(/g, 'Math.log10(');
     const funcs = ['sin','cos','tan','asin','acos','atan','sqrt','abs','exp','pow','floor','ceil','round'];
     funcs.forEach(f => { expr = expr.replace(new RegExp(`\\b${f}\\(`, 'g'), `Math.${f}(`); });
+    
+    // Reemplazar constantes
     expr = expr.replace(/\bpi\b/g, 'Math.PI');
-    expr = expr.replace(/(^|[^a-zA-Z0-9\.])e($|[^a-zA-Z0-9])/g, '$1Math.E$2');
+    expr = expr.replace(/\be\b/g, 'Math.E'); // \b evita romper Math.E
+    
     return expr;
 }
 
@@ -192,10 +215,13 @@ function evaluate(x, y = 0) {
         const f = new Function('x', 'y', 'z', 'a', 'b', `return ${expr};`);
         const r = f(x, y, 0, AppState.a, AppState.b);
         return (isNaN(r) || !isFinite(r)) ? null : r;
-    } catch (e) { return null; }
+    } catch (e) { 
+        return null; 
+    }
 }
 
 function updateGraphics() {
+    // Actualizar malla 3D
     const pos3D = geometry3D.attributes.position;
     const col3D = geometry3D.attributes.color;
     const cLow = new THREE.Color(0x3b82f6), cHigh = new THREE.Color(0xef4444), tempC = new THREE.Color();
@@ -208,23 +234,30 @@ function updateGraphics() {
             const t = THREE.MathUtils.clamp((z + 5) / 10, 0, 1);
             tempC.lerpColors(cLow, cHigh, t);
             col3D.setXYZ(i, tempC.r, tempC.g, tempC.b);
-        } else { pos3D.setY(i, 0); }
+        } else { 
+            pos3D.setY(i, 0); 
+        }
     }
-    pos3D.needsUpdate = true; col3D.needsUpdate = true;
+    pos3D.needsUpdate = true; 
+    col3D.needsUpdate = true;
     geometry3D.computeVertexNormals();
 
+    // Actualizar curva 2D
     const pos2D = curve2DGeo.attributes.position;
     for (let i = 0; i < curveRes; i++) {
         const x = (i / (curveRes - 1)) * 12 - 6;
         const y = evaluate(x, 0);
-        if (y !== null) { pos2D.setXYZ(i, x, y, 0); } 
-        else { pos2D.setXYZ(i, x, 0, 0); }
+        if (y !== null) { 
+            pos2D.setXYZ(i, x, y, 0); 
+        } else { 
+            pos2D.setXYZ(i, x, 0, 0); 
+        }
     }
     pos2D.needsUpdate = true;
 }
 
 // =========================================
-// LÓGICA DE UI
+// LÓGICA DE UI Y EVENTOS
 // =========================================
 els.keypad.addEventListener('click', (e) => {
     const btn = e.target.closest('button.key');
@@ -235,11 +268,26 @@ els.keypad.addEventListener('click', (e) => {
     else if (btn.dataset.action === 'calculate') calculate();
 });
 
-function insertText(char) { AppState.expression += char; updateDisplay(); updateGraphics(); }
-function clearDisplay() { AppState.expression = ""; updateDisplay(); updateGraphics(); }
-function backspace() { AppState.expression = AppState.expression.slice(0, -1); updateDisplay(); updateGraphics(); }
+function insertText(char) { 
+    AppState.expression += char; 
+    updateDisplay(); 
+    updateGraphics(); 
+}
+
+function clearDisplay() { 
+    AppState.expression = ""; 
+    updateDisplay(); 
+    updateGraphics(); 
+}
+
+function backspace() { 
+    AppState.expression = AppState.expression.slice(0, -1); 
+    updateDisplay(); 
+    updateGraphics(); 
+}
 
 function calculate() {
+    // Animación pulso visual al presionar igual
     els.calc.classList.remove('pulse');
     void els.calc.offsetWidth; 
     els.calc.classList.add('pulse');
@@ -249,11 +297,15 @@ function calculate() {
 function updateDisplay() {
     const text = AppState.expression || "0";
     let isSyntaxError = false;
+    
+    // Comprobación de sintaxis impecable
     if (text !== "0") {
         try {
             const expr = prepareExpression(text);
             new Function('x', 'y', 'z', 'a', 'b', `return ${expr};`);
-        } catch (e) { isSyntaxError = true; }
+        } catch (e) { 
+            isSyntaxError = true; 
+        }
     }
 
     if (isSyntaxError) {
@@ -265,12 +317,26 @@ function updateDisplay() {
     }
 }
 
-els.sliderA.addEventListener('input', (e) => { AppState.a = parseFloat(e.target.value); els.valA.innerText = AppState.a.toFixed(1); updateGraphics(); });
-els.sliderB.addEventListener('input', (e) => { AppState.b = parseFloat(e.target.value); els.valB.innerText = AppState.b.toFixed(1); updateGraphics(); });
+// Sliders
+els.sliderA.addEventListener('input', (e) => { 
+    AppState.a = parseFloat(e.target.value); 
+    els.valA.innerText = AppState.a.toFixed(1); 
+    updateGraphics(); 
+});
+els.sliderB.addEventListener('input', (e) => { 
+    AppState.b = parseFloat(e.target.value); 
+    els.valB.innerText = AppState.b.toFixed(1); 
+    updateGraphics(); 
+});
 
+// =========================================
+// LÓGICA DE MODO (2D <-> 3D)
+// =========================================
 function setMode(mode) {
     if (AppState.isAnimating) return;
-    AppState.mode = mode; AppState.isAnimating = true;
+    AppState.mode = mode; 
+    AppState.isAnimating = true;
+    
     els.btn2D.classList.toggle('active', mode === '2D');
     els.btn3D.classList.toggle('active', mode === '3D');
     els.statusText.innerText = mode === '2D' ? "MODO 2D" : "MODO 3D";
@@ -278,168 +344,24 @@ function setMode(mode) {
 
     let targetPos, targetLookAt, targetUp;
     if (mode === '2D') {
-        group3D.visible = false; group2D.visible = true;
-        targetPos = new THREE.Vector3(0, 0, 10); targetLookAt = new THREE.Vector3(0, 0, 0); targetUp = new THREE.Vector3(0, 1, 0);
+        group3D.visible = false; 
+        group2D.visible = true;
+        targetPos = new THREE.Vector3(0, 0, 10); 
+        targetLookAt = new THREE.Vector3(0, 0, 0); 
+        targetUp = new THREE.Vector3(0, 1, 0);
     } else {
-        group3D.visible = true; group2D.visible = false;
-        targetPos = new THREE.Vector3(8, 6, 8); targetLookAt = new THREE.Vector3(0, 0, 0); targetUp = new THREE.Vector3(0, 1, 0);
+        group3D.visible = true; 
+        group2D.visible = false;
+        targetPos = new THREE.Vector3(8, 6, 8); 
+        targetLookAt = new THREE.Vector3(0, 0, 0); 
+        targetUp = new THREE.Vector3(0, 1, 0);
     }
 
     const startPos = camera.position.clone(), startUp = camera.up.clone(), startTarget = controls.target.clone();
     let progress = 0;
+    
     function animateCamera() {
         progress += 0.025;
         if (progress > 1) progress = 1;
-        const ease = 1 - Math.pow(1 - progress, 3); 
-        camera.position.lerpVectors(startPos, targetPos, ease);
-        camera.up.lerpVectors(startUp, targetUp, ease);
-        controls.target.lerpVectors(startTarget, targetLookAt, ease);
-        controls.update();
-        if (progress < 1) requestAnimationFrame(animateCamera);
-        else { AppState.isAnimating = false; controls.enableRotate = (mode === '3D'); }
-    }
-    animateCamera();
-}
-els.btn2D.addEventListener('click', () => setMode('2D'));
-els.btn3D.addEventListener('click', () => setMode('3D'));
-
-// =========================================
-// TEMA OSCURO/CLARO
-// =========================================
-els.themeBtn.addEventListener('click', () => {
-    AppState.isDarkMode = !AppState.isDarkMode;
-    document.documentElement.classList.toggle('dark-mode', AppState.isDarkMode);
-    els.themeBtn.innerText = AppState.isDarkMode ? "☀️" : "🌙";
-    const theme = AppState.isDarkMode ? themes.dark : themes.light;
-    
-    scene.background.setHex(theme.bg);
-    paperPlane.material.color.setHex(theme.paper);
-    grid2DMat.color.setHex(theme.grid);
-    axisMat.color.setHex(theme.axes);
-
-    group3D.remove(gridHelper3D);
-    gridHelper3D.geometry.dispose();
-    gridHelper3D.material.dispose();
-    gridHelper3D = new THREE.GridHelper(20, 20, theme.grid3D_center, theme.grid3D_base);
-    group3D.add(gridHelper3D);
-});
-
-// =========================================
-// ARRASTRE Y REDIMENSIÓN
-// =========================================
-if (AppState.isMobile) { setMode('2D'); expandMobile(); } 
-else { setMode('2D'); }
-
-let dragOffset = { x: 0, y: 0 };
-els.calcHeader.addEventListener('mousedown', (e) => {
-    if (AppState.isMobile) return;
-    AppState.isDraggingCalc = true;
-    dragOffset.x = e.clientX - els.calc.offsetLeft;
-    dragOffset.y = e.clientY - els.calc.offsetTop;
-    els.calcHeader.style.cursor = 'grabbing';
-});
-
-window.addEventListener('mouseup', () => {
-    AppState.isDraggingCalc = false;
-    els.calcHeader.style.cursor = AppState.isMobile ? 'default' : 'grab';
-});
-
-window.addEventListener('mousemove', (e) => {
-    if (AppState.isDraggingCalc && !AppState.isMobile) {
-        let newX = e.clientX - dragOffset.x, newY = e.clientY - dragOffset.y;
-        newX = Math.max(0, Math.min(window.innerWidth - els.calc.offsetWidth, newX));
-        newY = Math.max(0, Math.min(window.innerHeight - els.calc.offsetHeight, newY));
-        els.calc.style.left = newX + 'px'; els.calc.style.top = newY + 'px';
-        els.calc.style.right = 'auto';
-    }
-});
-
-let isResizing = false;
-els.resizeHandle.addEventListener('mousedown', (e) => {
-    if (AppState.isMobile) return;
-    isResizing = true;
-    e.preventDefault(); 
-});
-
-window.addEventListener('mousemove', (e) => {
-    if (!isResizing) return;
-    let newWidth = e.clientX - els.calc.offsetLeft;
-    let newHeight = e.clientY - els.calc.offsetTop;
-    newWidth = Math.max(300, Math.min(window.innerWidth - els.calc.offsetLeft - 10, newWidth));
-    newHeight = Math.max(400, Math.min(window.innerHeight - els.calc.offsetTop - 10, newHeight));
-    els.calc.style.width = newWidth + 'px';
-    els.calc.style.height = newHeight + 'px';
-});
-
-function expandMobile() { els.calc.classList.add('expanded'); AppState.calcExpanded = true; els.btnMinimize.style.background = '#94a3b8'; }
-function minimizeMobile() { els.calc.classList.remove('expanded'); AppState.calcExpanded = false; els.btnMinimize.style.background = '#ef4444'; }
-els.btnMinimize.addEventListener('click', () => { if (AppState.calcExpanded) minimizeMobile(); else expandMobile(); });
-
-let touchStartY = 0;
-els.calcHeader.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, {passive: true});
-els.calcHeader.addEventListener('touchmove', (e) => {
-    const touchY = e.touches[0].clientY, diff = touchStartY - touchY;
-    if (diff > 50 && !AppState.calcExpanded) expandMobile();
-    if (diff < -50 && AppState.calcExpanded) minimizeMobile();
-}, {passive: true});
-
-// =========================================
-// INTERACCIÓN GRÁFICA
-// =========================================
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-const pointerMesh = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), new THREE.MeshBasicMaterial({ color: 0x22d3ee }));
-scene.add(pointerMesh);
-pointerMesh.visible = false;
-
-function handlePointer(clientX, clientY) {
-    if (clientX > window.innerWidth - els.calc.offsetWidth && !AppState.isMobile) return;
-    if (AppState.isMobile && clientY > window.innerHeight - els.calc.offsetHeight) return;
-
-    mouse.x = (clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
-    const target = AppState.mode === '2D' ? curve2D : mesh3D;
-    const intersects = raycaster.intersectObject(target);
-
-    if (intersects.length > 0) {
-        const point = intersects[0].point;
-        pointerMesh.position.copy(point);
-        pointerMesh.visible = true;
-        els.tooltip.style.display = 'block';
-        els.tooltip.style.left = clientX + 'px'; els.tooltip.style.top = clientY + 'px';
-        if (AppState.mode === '2D') els.tooltip.innerText = `x: ${point.x.toFixed(2)}, y: ${point.y.toFixed(2)}`;
-        else els.tooltip.innerText = `x: ${point.x.toFixed(2)}, z: ${point.z.toFixed(2)}`;
-    } else {
-        pointerMesh.visible = false;
-        els.tooltip.style.display = 'none';
-    }
-}
-
-window.addEventListener('mousemove', (e) => handlePointer(e.clientX, e.clientY));
-window.addEventListener('touchmove', (e) => {
-    if(e.touches.length > 0 && !e.touches[0].target.closest('.calculator-container')) {
-        handlePointer(e.touches[0].clientX, e.touches[0].clientY);
-    }
-}, {passive: true});
-
-// =========================================
-// LOOP Y RESIZE
-// =========================================
-function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-}
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    if (window.innerWidth <= 768 !== AppState.isMobile) location.reload(); 
-});
-
-updateDisplay();
-updateGraphics();
-animate();
+        const ease = 1 - Math.pow(1 - progress, 3); // EaseOut Cubic
+        camera.position.lerpVectors(startPos, targetPos, ease
