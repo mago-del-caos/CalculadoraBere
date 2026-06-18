@@ -432,7 +432,7 @@ input[type=range]::-moz-range-thumb {
 }
 
 /* =========================================
-   RESPONSIVE MÓVIL
+   RESPONSIVE MÓVIL OPTIMIZADO
    ========================================= */
 @media (max-width: 768px) {
     body { flex-direction: column; }
@@ -442,6 +442,7 @@ input[type=range]::-moz-range-thumb {
         height: var(--calc-height-mobile-collapsed);
         min-width: 100%;
         min-height: 60px;
+        max-height: 100vh;
         top: auto;
         bottom: 0;
         right: 0;
@@ -451,13 +452,14 @@ input[type=range]::-moz-range-thumb {
     }
 
     .calculator-container.expanded {
-        height: 75vh; /* Expandir casi toda la pantalla */
+        height: 92vh; /* Ocupa casi toda la pantalla para ver todo el teclado */
     }
 
     .calc-header {
         cursor: default;
         justify-content: center;
         position: relative;
+        padding: 10px 16px;
     }
 
     .mobile-drag-handle {
@@ -466,10 +468,35 @@ input[type=range]::-moz-range-thumb {
         height: 5px;
         background: #64748b;
         border-radius: 3px;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
     }
 
     .header-title { display: none; }
     .header-controls { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
-    .theme-btn { top: auto; bottom: 80px; right: 20px; z-index: 101; }
+    
+    /* El botón de tema se mantiene arriba a la derecha en móvil para no perderlo de vista */
+    .theme-btn { top: 15px; right: 15px; width: 35px; height: 35px; font-size: 1rem; z-index: 101; }
+
+    /* Compactación de la pantalla y controles para ganar espacio */
+    .screen-container { padding: 10px 16px; }
+    .screen-output { font-size: 1.1rem; }
+    .controls-area { padding: 8px 12px; }
+    .dropdown-container { margin-bottom: 8px; }
+    .examples-btn { padding: 8px; font-size: 0.85rem; }
+    .view-toggle { margin-bottom: 8px; padding: 3px; }
+    .toggle-btn { padding: 6px; font-size: 0.8rem; }
+    .slider-group { margin-bottom: 8px; }
+
+    /* Teclado ajustado para caber perfectamente */
+    .keypad {
+        flex: 1;
+        min-height: 0; /* Permite que el flexbox encoja el teclado si es necesario */
+        gap: 6px;
+        padding: 10px;
+        grid-auto-rows: 1fr; /* Distribuye el espacio equitativamente */
+    }
+    .key { min-height: 35px; font-size: 0.9rem; }
+    .key.func { font-size: 0.8rem; }
+    .key.op { font-size: 1rem; }
+    .key.enter { font-size: 1.1rem; }
 }
