@@ -42,19 +42,23 @@ const els = {
 };
 
 // =========================================
-// FUNCIONES DE EJEMPLO
+// FUNCIONES DE EJEMPLO (NUEVAS Y 3D)
 // =========================================
 const examples = [
-    { name: "1. Onda Senoidal", expr: "a * sin(x * b)", mode: "2D" },
-    { name: "2. Parábola Cúbica", expr: "a * x^3 - b * x", mode: "2D" },
-    { name: "3. Función Logarítmica", expr: "a * log(abs(x) * b)", mode: "2D" },
-    { name: "4. Gaussiana (Campana)", expr: "a * exp(-(x^2) / b)", mode: "2D" },
-    { name: "5. Cartón de Huevos", expr: "sin(x * a) * cos(y * b)", mode: "3D" },
-    { name: "6. Onda Radial (Agua)", expr: "sin(sqrt(x^2 + y^2) * a) * 2", mode: "3D" },
-    { name: "7. Sombrero Mexicano", expr: "a * exp(-(x^2 + y^2) / b) * cos(sqrt(x^2 + y^2))", mode: "3D" },
-    { name: "8. Silla de Montar", expr: "(x^2 - y^2) * a * 0.1", mode: "3D" },
-    { name: "9. Olas Entrelazadas", expr: "sin(x * a + y) * cos(y * b - x)", mode: "3D" },
-    { name: "10. Espiral Logarítmica", expr: "sin(log(x^2 + y^2 + 0.1) * a) * b", mode: "3D" }
+    // 2D
+    { name: "1. Onda Senoidal 2D", expr: "a * sin(x * b)", mode: "2D" },
+    { name: "2. Parábola Cúbica 2D", expr: "a * x^3 - b * x", mode: "2D" },
+    { name: "3. Función Logarítmica 2D", expr: "a * log(abs(x) * b)", mode: "2D" },
+    { name: "4. Gaussiana (Campana) 2D", expr: "a * exp(-(x^2) / b)", mode: "2D" },
+    // 3D
+    { name: "5. Onda Senoidal 3D", expr: "sin(x) * a + cos(y) * b", mode: "3D" },
+    { name: "6. Cartón de Huevos 3D", expr: "sin(x * a) * cos(y * b)", mode: "3D" },
+    { name: "7. Onda Radial (Agua) 3D", expr: "sin(sqrt(x^2 + y^2) * a) * 2", mode: "3D" },
+    { name: "8. Sombrero Mexicano 3D", expr: "a * exp(-(x^2 + y^2) / b) * cos(sqrt(x^2 + y^2))", mode: "3D" },
+    { name: "9. Silla de Montar 3D", expr: "(x^2 - y^2) * a * 0.1", mode: "3D" },
+    { name: "10. Silla de Mono 3D", expr: "(x^3 - 3*x*y^2) * a * 0.05", mode: "3D" },
+    { name: "11. Olas Entrelazadas 3D", expr: "sin(x * a + y) * cos(y * b - x)", mode: "3D" },
+    { name: "12. Cráter Volcánico 3D", expr: "-a * exp(-(x^2 + y^2) / b)", mode: "3D" }
 ];
 
 // Poblar el menú desplegable
@@ -85,7 +89,7 @@ window.addEventListener('click', (e) => {
 });
 
 // =========================================
-// SETUP THREE.JS (Versión Clásica)
+// SETUP THREE.JS
 // =========================================
 const container = document.getElementById('viewport');
 const scene = new THREE.Scene();
@@ -103,13 +107,12 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
 
-// OrbitControls desde el scope global
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 
 const raycaster = new THREE.Raycaster();
-raycaster.params.Line.threshold = 0.2; // Necesario para detectar líneas finas en 2D
+raycaster.params.Line.threshold = 0.2;
 
 // Iluminación
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -142,7 +145,7 @@ const material3D = new THREE.MeshStandardMaterial({
 const mesh3D = new THREE.Mesh(geometry3D, material3D);
 mesh3D.castShadow = true; 
 mesh3D.receiveShadow = true;
-mesh3D.visible = false;
+mesh3D.visible = false; // Inicialmente oculto
 group3D.add(mesh3D);
 
 let gridHelper3D = new THREE.GridHelper(20, 20, themes.light.grid3D_center, themes.light.grid3D_base);
@@ -182,24 +185,24 @@ const curve2D = new THREE.Line(curve2DGeo, new THREE.LineBasicMaterial({ color: 
 group2D.add(curve2D);
 
 // =========================================
-// MOTOR MATEMÁTICO AVANZADO
+// MOTOR MATEMÁTICO
 // =========================================
 function prepareExpression(rawExpr) {
     let expr = rawExpr.toLowerCase();
     expr = expr.replace(/\^/g, '**');
     
-    // Multiplicación implícita ultra segura
+    // Multiplicación implícita
     expr = expr.replace(/(\d)([a-zA-Z\(])/g, '$1*$2'); 
     expr = expr.replace(/\)([a-zA-Z0-9\(])/g, ')*$1');  
     expr = expr.replace(/([xyz])([xyz\(])/g, '$1*$2');  
     
-    // Reemplazar funciones
+    // Funciones
     expr = expr.replace(/\bln\(/g, 'Math.log(');
     expr = expr.replace(/\blog\(/g, 'Math.log10(');
     const funcs = ['sin','cos','tan','asin','acos','atan','sqrt','abs','exp','pow','floor','ceil','round'];
     funcs.forEach(f => { expr = expr.replace(new RegExp(`\\b${f}\\(`, 'g'), `Math.${f}(`); });
     
-    // Reemplazar constantes
+    // Constantes
     expr = expr.replace(/\bpi\b/g, 'Math.PI');
     expr = expr.replace(/\be\b/g, 'Math.E'); 
     
@@ -271,19 +274,16 @@ function insertText(char) {
     updateDisplay(); 
     updateGraphics(); 
 }
-
 function clearDisplay() { 
     AppState.expression = ""; 
     updateDisplay(); 
     updateGraphics(); 
 }
-
 function backspace() { 
     AppState.expression = AppState.expression.slice(0, -1); 
     updateDisplay(); 
     updateGraphics(); 
 }
-
 function calculate() {
     els.calc.classList.remove('pulse');
     void els.calc.offsetWidth; 
@@ -294,7 +294,6 @@ function calculate() {
 function updateDisplay() {
     const text = AppState.expression || "0";
     let isSyntaxError = false;
-    
     if (text !== "0") {
         try {
             const expr = prepareExpression(text);
@@ -326,10 +325,10 @@ els.sliderB.addEventListener('input', (e) => {
 });
 
 // =========================================
-// LÓGICA DE MODO (2D <-> 3D)
+// LÓGICA DE MODO (2D <-> 3D) CORREGIDA
 // =========================================
 function setMode(mode) {
-    if (AppState.isAnimating) return;
+    if (AppState.isAnimating && AppState.mode === mode) return;
     AppState.mode = mode; 
     AppState.isAnimating = true;
     
@@ -342,12 +341,16 @@ function setMode(mode) {
     if (mode === '2D') {
         group3D.visible = false; 
         group2D.visible = true;
+        mesh3D.visible = false; // Ocultar malla explícitamente
+        
         targetPos = new THREE.Vector3(0, 0, 10); 
         targetLookAt = new THREE.Vector3(0, 0, 0); 
         targetUp = new THREE.Vector3(0, 1, 0);
     } else {
         group3D.visible = true; 
         group2D.visible = false;
+        mesh3D.visible = true; // MOSTRAR MALLA EXPLÍCITAMENTE (Solución al bug 3D)
+        
         targetPos = new THREE.Vector3(8, 6, 8); 
         targetLookAt = new THREE.Vector3(0, 0, 0); 
         targetUp = new THREE.Vector3(0, 1, 0);
@@ -389,7 +392,6 @@ els.themeBtn.addEventListener('click', () => {
     grid2DMat.color.setHex(theme.grid);
     axisMat.color.setHex(theme.axes);
 
-    // Recrear grid 3D
     group3D.remove(gridHelper3D);
     gridHelper3D.geometry.dispose();
     gridHelper3D.material.dispose();
