@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Graphing Calculator 2D/3D</title>
+    <title>Calculadora Gráfica Institucional</title>
     
-    <!-- Fuentes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- Estilos -->
     <link rel="stylesheet" href="style.css">
 
-    <!-- Three.js versión clásica (No requiere servidor local) -->
+    <!-- Three.js versión clásica -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
+
+    <!-- Pantalla de Inicio (Splash Screen) -->
+    <div id="splash-screen">
+        <img src="Calculadora.jpg" alt="Calculadora Institucional" class="splash-img">
+        <div class="splash-loader">Cargando motor gráfico...</div>
+    </div>
 
     <!-- Interfaz Superior (HUD) -->
     <div class="hud-overlay">
@@ -39,7 +43,6 @@
     <!-- Calculadora Flotante -->
     <div class="calculator-container" id="calculator">
         
-        <!-- Cabecera (Arrastrable en PC) -->
         <div class="calc-header" id="calc-header">
             <div class="header-inner">
                 <div class="mobile-drag-handle" id="mobile-handle"></div>
@@ -50,27 +53,32 @@
             </div>
         </div>
 
-        <!-- Pantalla LCD -->
         <div class="screen-container">
             <div class="screen-label">f(x, y) =</div>
             <div class="screen-output" id="display"><span class="cursor"></span></div>
         </div>
 
-        <!-- Controles (Modo, Sliders y Ejemplos) -->
         <div class="controls-area">
-            <!-- Menú Desplegable de Ejemplos -->
             <div class="dropdown-container">
                 <button id="examples-btn" class="examples-btn">Ejemplos Rápidos ⌄</button>
                 <div id="examples-dropdown" class="examples-dropdown"></div>
             </div>
 
-            <!-- Conmutador 2D / 3D -->
             <div class="view-toggle">
                 <button class="toggle-btn active" id="btn-2d">2D GRÁFICO</button>
                 <button class="toggle-btn" id="btn-3d">3D SUPERFICIE</button>
             </div>
 
-            <!-- Sliders de Parámetros -->
+            <!-- Selector de Color Institucional -->
+            <div class="color-selector">
+                <span class="color-label">Color Gráfica:</span>
+                <div class="color-options">
+                    <button class="color-btn green active" data-color="0x006847" title="Verde Bandera"></button>
+                    <button class="color-btn yellow" data-color="0xFFD700" title="Amarillo"></button>
+                    <button class="color-btn blue" data-color="0x0033A0" title="Azul"></button>
+                </div>
+            </div>
+
             <div class="slider-group">
                 <div class="slider-row">
                     <span>Parámetro A</span>
@@ -88,59 +96,49 @@
             </div>
         </div>
 
-        <!-- Teclado Numérico -->
         <div class="keypad" id="keypad">
-            <!-- Fila 1: Funciones -->
             <button class="key func" data-insert="sin(">sin</button>
             <button class="key func" data-insert="cos(">cos</button>
             <button class="key func" data-insert="tan(">tan</button>
             <button class="key func" data-insert="log(">log</button>
             <button class="key func" data-insert="ln(">ln</button>
 
-            <!-- Fila 2: Variables y Agrupación -->
             <button class="key func" data-insert="x">x</button>
             <button class="key func" data-insert="y">y</button>
             <button class="key func" data-insert="z">z</button>
             <button class="key func" data-insert="(">(</button>
             <button class="key func" data-insert=")">)</button>
 
-            <!-- Fila 3: Números y Operaciones -->
             <button class="key" data-insert="7">7</button>
             <button class="key" data-insert="8">8</button>
             <button class="key" data-insert="9">9</button>
             <button class="key op" data-insert="/">÷</button>
             <button class="key op" data-insert="^">xʸ</button>
 
-            <!-- Fila 4 -->
             <button class="key" data-insert="4">4</button>
             <button class="key" data-insert="5">5</button>
             <button class="key" data-insert="6">6</button>
             <button class="key op" data-insert="*">×</button>
             <button class="key op" data-insert="sqrt(">√</button>
 
-            <!-- Fila 5 -->
             <button class="key" data-insert="1">1</button>
             <button class="key" data-insert="2">2</button>
             <button class="key" data-insert="3">3</button>
             <button class="key op" data-insert="+">+</button>
             <button class="key op" data-insert="-">-</button>
 
-            <!-- Fila 6 -->
             <button class="key" data-insert="0">0</button>
             <button class="key" data-insert=".">.</button>
             <button class="key op" data-insert="pi">π</button>
             <button class="key op" data-action="backspace">DEL</button>
             <button class="key clear" data-action="clear">AC</button>
 
-            <!-- Fila 7: Igual (Ocupa toda la fila) -->
             <button class="key enter" data-action="calculate" style="grid-column: span 5;">=</button>
         </div>
         
-        <!-- Manija para redimensionar en PC -->
         <div class="resize-handle" id="resize-handle"></div>
     </div>
 
-    <!-- Script Principal (Sin módulos para evitar bloqueos por CORS local) -->
     <script src="script.js"></script>
 </body>
 </html>
