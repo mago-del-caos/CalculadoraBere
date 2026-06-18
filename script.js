@@ -12,7 +12,13 @@ const AppState = {
     isMobile: window.innerWidth <= 768,
     isDraggingCalc: false,
     isAnimating: false,
-    calcExpanded: false
+    calcExpanded: false,
+    isDarkMode: false
+};
+
+const themes = {
+    light: { bg: 0xf8fafc, paper: 0xffffff, grid: 0xe2e8f0, axes: 0x0f172a },
+    dark: { bg: 0x0a0f1d, paper: 0x1e293b, grid: 0x334155, axes: 0x94a3b8 }
 };
 
 // Referencias DOM
@@ -31,7 +37,8 @@ const els = {
     btn2D: document.getElementById('btn-2d'),
     btn3D: document.getElementById('btn-3d'),
     sliderA: document.getElementById('slider-a'),
-    sliderB: document.getElementById('slider-b')
+    sliderB: document.getElementById('slider-b'),
+    themeBtn: document.getElementById('theme-toggle')
 };
 
 // =========================================
@@ -39,10 +46,10 @@ const els = {
 // =========================================
 const container = document.getElementById('viewport');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf8fafc);
+scene.background = new THREE.Color(themes.light.bg);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 0, 10); // Posición inicial 2D
+camera.position.set(0, 0, 10); 
 camera.up.set(0, 1, 0); 
 camera.lookAt(0, 0, 0);
 
@@ -74,7 +81,7 @@ scene.add(dirLight);
 const group3D = new THREE.Group();
 scene.add(group3D);
 
-const geometry3D = new THREE.PlaneGeometry(14, 14, 100, 100); // Resolución optimizada
+const geometry3D = new THREE.PlaneGeometry(14, 14, 100, 100); 
 geometry3D.rotateX(-Math.PI / 2);
 
 const count = geometry3D.attributes.position.count;
@@ -106,12 +113,12 @@ const group2D = new THREE.Group();
 scene.add(group2D);
 
 const planeGeo = new THREE.PlaneGeometry(12, 8);
-const planeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+const planeMat = new THREE.MeshBasicMaterial({ color: themes.light.paper, side: THREE.DoubleSide });
 const paperPlane = new THREE.Mesh(planeGeo, planeMat);
 paperPlane.position.z = -0.1;
 group2D.add(paperPlane);
 
-const grid2DMat = new THREE.LineBasicMaterial({ color: 0xe2e8f0 });
+const grid2DMat = new THREE.LineBasicMaterial({ color: themes.light.grid });
 const grid2DGroup = new THREE.Group();
 
 for (let i = -6; i <= 6; i++) {
@@ -124,7 +131,7 @@ for (let i = -4; i <= 4; i++) {
 }
 group2D.add(grid2DGroup);
 
-const axisMat = new THREE.LineBasicMaterial({ color: 0x0f172a });
+const axisMat = new THREE.LineBasicMaterial({ color: themes.light.axes });
 const xAxisGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-6, 0, 0), new THREE.Vector3(6, 0, 0)]);
 const yAxisGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -4, 0), new THREE.Vector3(0, 4, 0)]);
 group2D.add(new THREE.Line(xAxisGeo, axisMat));
@@ -147,7 +154,11 @@ function evaluate(x, y = 0) {
         let expr = AppState.expression.toLowerCase();
         expr = expr.replace(/\^/g, '**');
         
-        const funcs = ['sin','cos','tan','asin','acos','atan','sqrt','abs','log','exp','pow','floor','ceil','round'];
+        // Mapeo logaritmos y otras funciones
+        expr = expr.replace(/\bln\(/g, 'Math.log(');
+        expr = expr.replace(/\blog\(/g, 'Math.log10(');
+        
+        const funcs = ['sin','cos','tan','asin','acos','atan','sqrt','abs','exp','pow','floor','ceil','round'];
         funcs.forEach(f => {
             expr = expr.replace(new RegExp(`\\b${f}\\(`, 'g'), `Math.${f}(`);
         });
@@ -155,8 +166,9 @@ function evaluate(x, y = 0) {
         expr = expr.replace(/\bpi\b/g, 'Math.PI');
         expr = expr.replace(/\be\b/g, 'Math.E');
 
-        const f = new Function('x', 'y', 'a', 'b', `return ${expr};`);
-        const r = f(x, y, AppState.a, AppState.b);
+        // Pasamos z = 0 para evitar errores si el usuario introduce z en una función 2D
+        const f = new Function('x', 'y', 'z', 'a', 'b', `return ${expr};`);
+        const r = f(x, y, 0, AppState.a, AppState.b);
         return (isNaN(r) || !isFinite(r)) ? null : r;
     } catch (e) { 
         return null; 
@@ -216,6 +228,8 @@ els.keypad.addEventListener('click', (e) => {
         insertText(btn.dataset.insert);
     } else if (btn.dataset.action === 'clear') {
         clearDisplay();
+    } else if (btn.dataset.action === 'backspace') {
+        backspace();
     } else if (btn.dataset.action === 'calculate') {
         calculate();
     }
@@ -233,8 +247,13 @@ function clearDisplay() {
     updateGraphics();
 }
 
+function backspace() {
+    AppState.expression = AppState.expression.slice(0, -1);
+    updateDisplay();
+    updateGraphics();
+}
+
 function calculate() {
-    // Animación visual del '='
     els.display.style.color = '#fff';
     setTimeout(() => els.display.style.color = 'var(--screen-text)', 200);
     updateGraphics();
@@ -298,7 +317,7 @@ function setMode(mode) {
         progress += 0.025;
         if (progress > 1) progress = 1;
         
-        const ease = 1 - Math.pow(1 - progress, 3); // EaseOut
+        const ease = 1 - Math.pow(1 - progress, 3); 
         
         camera.position.lerpVectors(startPos, targetPos, ease);
         camera.up.lerpVectors(startUp, targetUp, ease);
@@ -317,6 +336,21 @@ function setMode(mode) {
 
 els.btn2D.addEventListener('click', () => setMode('2D'));
 els.btn3D.addEventListener('click', () => setMode('3D'));
+
+// =========================================
+// TEMA OSCURO / CLARO
+// =========================================
+els.themeBtn.addEventListener('click', () => {
+    AppState.isDarkMode = !AppState.isDarkMode;
+    document.documentElement.classList.toggle('dark-mode', AppState.isDarkMode);
+    els.themeBtn.innerText = AppState.isDarkMode ? "☀️" : "🌙";
+    
+    const theme = AppState.isDarkMode ? themes.dark : themes.light;
+    scene.background.setHex(theme.bg);
+    paperPlane.material.color.setHex(theme.paper);
+    grid2DMat.color.setHex(theme.grid);
+    axisMat.color.setHex(theme.axes);
+});
 
 // =========================================
 // SISTEMA DRAG & DROP (PC) & MOBILE DRAWER
